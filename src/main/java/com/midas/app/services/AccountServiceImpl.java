@@ -3,10 +3,12 @@ package com.midas.app.services;
 import com.midas.app.models.Account;
 import com.midas.app.repositories.AccountRepository;
 import com.midas.app.workflows.CreateAccountWorkflow;
+import com.midas.generated.model.UpdateAccountDto;
 import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowOptions;
 import io.temporal.workflow.Workflow;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Service;
@@ -49,5 +51,23 @@ public class AccountServiceImpl implements AccountService {
   @Override
   public List<Account> getAccounts() {
     return accountRepository.findAll();
+  }
+
+  @Override
+  public Account updateAccount(UUID accountId, UpdateAccountDto details) {
+    // Retrieve the existing account
+    Account account =
+        accountRepository
+            .findById(accountId)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
+
+    // Update fields
+    account.setFirstName(details.getFirstName());
+    account.setLastName(details.getLastName());
+    account.setEmail(details.getEmail());
+
+    // Save the updated account
+    return accountRepository.save(account);
   }
 }

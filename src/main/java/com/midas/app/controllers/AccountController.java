@@ -1,23 +1,33 @@
 package com.midas.app.controllers;
 
+import com.midas.app.enums.ProviderType;
 import com.midas.app.mappers.Mapper;
 import com.midas.app.models.Account;
 import com.midas.app.services.AccountService;
+import com.midas.app.workflows.UserSignupWorkflow;
 import com.midas.generated.api.AccountsApi;
 import com.midas.generated.model.AccountDto;
 import com.midas.generated.model.CreateAccountDto;
+import com.midas.generated.model.UpdateAccountDto;
+import io.temporal.client.WorkflowClient;
+import io.temporal.client.WorkflowOptions;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @Controller
 @RequiredArgsConstructor
 public class AccountController implements AccountsApi {
   private final AccountService accountService;
+  private final WorkflowClient workflowClient;
   private final Logger logger = LoggerFactory.getLogger(AccountController.class);
 
   /**
@@ -31,12 +41,24 @@ public class AccountController implements AccountsApi {
   public ResponseEntity<AccountDto> createUserAccount(CreateAccountDto createAccountDto) {
     logger.info("Creating account for user with email: {}", createAccountDto.getEmail());
 
+    // Setup the workflow options
+    WorkflowOptions options =
+        WorkflowOptions.newBuilder().setTaskQueue("UserSignupTaskQueue").build();
+
+    // Create a new workflow stub from options
+    UserSignupWorkflow workflow = workflowClient.newWorkflowStub(UserSignupWorkflow.class, options);
+
+    // Execute workflow to create a Stripe customer and return the ID
+    String customerId = workflow.createUser(createAccountDto.getEmail());
+
     var account =
         accountService.createAccount(
             Account.builder()
                 .firstName(createAccountDto.getFirstName())
                 .lastName(createAccountDto.getLastName())
                 .email(createAccountDto.getEmail())
+                .providerType(ProviderType.STRIPE)
+                .providerId(customerId)
                 .build());
 
     return new ResponseEntity<>(Mapper.toAccountDto(account), HttpStatus.CREATED);
@@ -55,5 +77,21 @@ public class AccountController implements AccountsApi {
     var accountsDto = accounts.stream().map(Mapper::toAccountDto).toList();
 
     return new ResponseEntity<>(accountsDto, HttpStatus.OK);
+  }
+
+  /**
+   * PATCH /accounts/{accountId} : Update user account
+   *
+   * @param accountId The ID of the account to update (required)
+   * @param updateAccountDto The updated account fields (required)
+   * @return ResponseEntity<AccountDto>
+   */
+  @PatchMapping("/{accountId}")
+  public ResponseEntity<AccountDto> updateAccount(
+      @PathVariable UUID accountId, @RequestBody UpdateAccountDto updateAccountDto) {
+
+    logger.info("Updating account for ID: {}", accountID.toString());
+    Account updatedAccount = accountService.updateAccount(accountId, updateAccountDto);
+    return ResponseEntity.ok(Mapper.toAccountDto(updatedAccount));
   }
 }

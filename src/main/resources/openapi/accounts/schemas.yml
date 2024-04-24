@@ -1,5 +1,24 @@
 components:
   schemas:
+    UpdateAccount:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+      properties:
+        firstName:
+          type: string
+          description: "User's first name"
+          example: "John"
+        lastName:
+          type: string
+          description: "User's last name"
+          example: "Doe"
+        email:
+          type: string
+          description: "Email of user"
+          example: "john@doe.com"
     createAccount:
       type: object
       properties:
@@ -39,6 +58,16 @@ components:
           type: string
           description: "Email of user"
           example: "john@doe.com"
+        providerType:
+          type: string
+          description: "Type of the payment provider"
+          example: "stripe"
+          enum:
+            - stripe
+        providerId:
+          type: string
+          description: "ID provided by the payment provider"
+          example: "cus_123abc456def"
         createdAt:
           type: string
           format: date-time
@@ -55,6 +84,9 @@ components:
         - id: usr_fba5b240-0e68-4e64-aca6-f12022dc4be3
           firstName: "John"
           lastName: "Doe"
+          email: "john@doe.com"
+          providerType: "stripe"
+          providerId: "cus_123abc456def"
           creationAt: "2022-04-13T01:52:40.690387Z"
           updatedAt: "2022-04-13T01:52:40.690387Z"
 
