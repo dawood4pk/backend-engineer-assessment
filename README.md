@@ -48,4 +48,8 @@ The implementation is structured to use Spring Boot for the REST API, JPA for da
 
 ## Code Walkthrough
 
-For a complete walkthrough of the code, visit [Video Walkthrough](https://tobeadded.com/).
+For a complete walkthrough of the code, visit:
+
+- [Video 1: - Exploring the project's local execution](https://www.loom.com/share/e34d7cdb143a48b78f9f6158cb4da58e?sid=1ec28465-cd98-43b0-b10a-13f624891570).
+- [Video 2: - Exploring POST API Workflow and Implementation](https://www.loom.com/share/b38a78b5e4cf4aad8d116d9b13bf03dd?sid=fe38d7c2-5a07-4dbd-8516-057596d5334c).
+- [Video 3: - Third Video Walkthrough](https://www.loom.com/share/940099f144c54f3fa3c2f9010d6bbf63?sid=f8c65652-c10b-4edd-9557-aa660d0dbd67).
