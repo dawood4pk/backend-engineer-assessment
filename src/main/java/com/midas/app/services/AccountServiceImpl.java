@@ -1,12 +1,16 @@
 package com.midas.app.services;
 
+import com.midas.app.exceptions.ResourceAlreadyExistsException;
 import com.midas.app.models.Account;
 import com.midas.app.repositories.AccountRepository;
 import com.midas.app.workflows.CreateAccountWorkflow;
+import com.midas.generated.model.CreateAccountDto;
 import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowOptions;
 import io.temporal.workflow.Workflow;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Service;
@@ -28,6 +32,9 @@ public class AccountServiceImpl implements AccountService {
    */
   @Override
   public Account createAccount(Account details) {
+    if (accountRepository.existsByEmail(details.getEmail())) {
+      throw new ResourceAlreadyExistsException("Email already in use");
+    }
     var options =
         WorkflowOptions.newBuilder()
             .setTaskQueue(CreateAccountWorkflow.QUEUE_NAME)
@@ -37,7 +44,6 @@ public class AccountServiceImpl implements AccountService {
     logger.info("initiating workflow to create account for email: {}", details.getEmail());
 
     var workflow = workflowClient.newWorkflowStub(CreateAccountWorkflow.class, options);
-
     return workflow.createAccount(details);
   }
 
@@ -49,5 +55,23 @@ public class AccountServiceImpl implements AccountService {
   @Override
   public List<Account> getAccounts() {
     return accountRepository.findAll();
+  }
+
+  @Override
+  public Account updateAccount(UUID accountId, CreateAccountDto accountDetails) {
+    return accountRepository
+        .findById(accountId)
+        .map(
+            account -> {
+              if (!account.getEmail().equals(accountDetails.getEmail())
+                  && accountRepository.existsByEmail(accountDetails.getEmail())) {
+                throw new ResourceAlreadyExistsException("Email already in use");
+              }
+              account.setFirstName(accountDetails.getFirstName());
+              account.setLastName(accountDetails.getLastName());
+              account.setEmail(accountDetails.getEmail());
+              return accountRepository.save(account);
+            })
+        .orElseThrow(() -> new NoSuchElementException("Account not found with ID: " + accountId));
   }
 }

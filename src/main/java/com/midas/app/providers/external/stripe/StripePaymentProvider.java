@@ -1,21 +1,27 @@
 package com.midas.app.providers.external.stripe;
 
+import com.midas.app.enums.ProviderType;
 import com.midas.app.models.Account;
 import com.midas.app.providers.payment.CreateAccount;
 import com.midas.app.providers.payment.PaymentProvider;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import com.stripe.Stripe;
+import com.stripe.exception.StripeException;
+import com.stripe.model.Customer;
+import com.stripe.param.CustomerCreateParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
-@Getter
 public class StripePaymentProvider implements PaymentProvider {
   private final Logger logger = LoggerFactory.getLogger(StripePaymentProvider.class);
 
   private final StripeConfiguration configuration;
+
+  public StripePaymentProvider(StripeConfiguration configuration) {
+    this.configuration = configuration;
+    Stripe.apiKey = configuration.getApiKey();
+  }
 
   /** providerName is the name of the payment provider */
   @Override
@@ -24,13 +30,35 @@ public class StripePaymentProvider implements PaymentProvider {
   }
 
   /**
-   * createAccount creates a new account in the payment provider.
+   * Creates a new customer in Stripe.
    *
-   * @param details is the details of the account to be created.
-   * @return Account
+   * @param details the details of the account to be created.
+   * @return Account populated with Stripe customer ID as providerId if successful.
    */
   @Override
   public Account createAccount(CreateAccount details) {
-    throw new UnsupportedOperationException("Not implemented");
+    CustomerCreateParams params =
+        CustomerCreateParams.builder()
+            .setEmail(details.getEmail())
+            .setName(details.getFirstName() + " " + details.getLastName())
+            .build();
+
+    try {
+      Customer customer = Customer.create(params);
+      logger.info("Created Stripe customer with ID: {}", customer.getId());
+
+      // Create an Account object to return
+      Account account = new Account();
+      account.setEmail(details.getEmail());
+      account.setFirstName(details.getFirstName());
+      account.setLastName(details.getLastName());
+      account.setProviderType(ProviderType.STRIPE);
+      account.setProviderId(customer.getId()); // Set the Stripe customer ID
+
+      return account;
+    } catch (StripeException e) {
+      logger.error("Error creating Stripe customer: {}", e.getMessage(), e);
+      return null;
+    }
   }
 }

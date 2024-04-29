@@ -1,6 +1,9 @@
 package com.midas.app.models;
 
+import com.midas.app.enums.ProviderType;
 import jakarta.persistence.*;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import lombok.*;
@@ -13,7 +16,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "accounts")
+@Table(
+    name = "accounts",
+    uniqueConstraints = {@UniqueConstraint(columnNames = {"email"})})
 public class Account {
   @Id
   @Column(name = "id")
@@ -26,8 +31,15 @@ public class Account {
   @Column(name = "last_name")
   private String lastName;
 
-  @Column(name = "email")
+  @Column(name = "email", unique = true)
   private String email;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "provider_type")
+  private ProviderType providerType;
+
+  @Column(name = "provider_id")
+  private String providerId;
 
   @Column(name = "created_at")
   @CreationTimestamp
