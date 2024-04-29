@@ -39,6 +39,13 @@ components:
           type: string
           description: "Email of user"
           example: "john@doe.com"
+        providerType:
+          type: string
+          enum: [ stripe ]
+          description: "Type of the payment provider"
+        providerId:
+          type: string
+          description: "ID of the customer in the payment provider's system"
         createdAt:
           type: string
           format: date-time

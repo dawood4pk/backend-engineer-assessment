@@ -50,3 +50,42 @@ get:
       $ref: "../../common/responses.yml#/components/responses/forbidden"
     "500":
       $ref: "../../common/responses.yml#/components/responses/internalServerError"
+
+/accounts/{accountId}:
+  patch:
+    summary: Update an existing account
+    operationId: updateAccount
+    tags:
+      - Accounts
+    parameters:
+      - name: accountId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: The ID of the account to be updated
+    requestBody:
+      description: Account update details
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas.yml#/components/schemas/UpdateAccount"
+    responses:
+      "200":
+        description: Account successfully updated
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas.yml#/components/schemas/account"
+      "400":
+        $ref: "../../common/responses.yml#/components/responses/badRequest"
+      "404":
+        description: Account not found
+      "401":
+        $ref: "../../common/responses.yml#/components/responses/unauthorized"
+      "403":
+        $ref: "../../common/responses.yml#/components/responses/forbidden"
+      "500":
+        $ref: "../../common/responses.yml#/components/responses/internalServerError"
