@@ -8,6 +8,8 @@ import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Customer;
 import com.stripe.param.CustomerCreateParams;
+import java.util.HashMap;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -58,6 +60,26 @@ public class StripePaymentProvider implements PaymentProvider {
       return account;
     } catch (StripeException e) {
       logger.error("Error creating Stripe customer: {}", e.getMessage(), e);
+      return null;
+    }
+  }
+
+  @Override
+  public Account updateAccount(CreateAccount updateDetails, String providerId) {
+    try {
+      Customer customer = Customer.retrieve(providerId);
+      Map<String, Object> updates = new HashMap<>();
+      updates.put("email", updateDetails.getEmail());
+      updates.put("name", updateDetails.getFirstName() + " " + updateDetails.getLastName());
+      customer.update(updates);
+
+      Account account = new Account();
+      // Populate account details from the updateDetails and the response from Stripe
+      // ...
+
+      return account;
+    } catch (StripeException e) {
+      logger.error("Error updating Stripe customer: {}", e.getMessage(), e);
       return null;
     }
   }
